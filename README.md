@@ -247,8 +247,11 @@ The backend is built with Node.js, Express, and PostgreSQL. It includes the foll
 }
 ```
 
+[Previous sections remain the same until Postman Testing]
+
 ## Postman Testing
 
+### Manual Testing
 To test the location tracking functionality using Postman:
 
 1. Register a new user:
@@ -284,6 +287,38 @@ To test the location tracking functionality using Postman:
      "timestamp": "2024-12-30T10:03:00.257Z"
    }
    ```
+
+### ⚡ Automated Testing with Postman Runner
+
+For efficient testing of location updates, use Postman's Collection Runner to automate the process:
+
+1. Create a new collection in Postman
+
+2. Add a new request to the collection:
+   - Method: `POST`
+   - URL: `http://localhost:3000/api/users/locations`
+   - Headers: `Authorization: Bearer YOUR_JWT_TOKEN`
+   - Body (Raw JSON):
+   ```json
+   {
+     "latitude": 37.7749,
+     "longitude": -122.4194,
+     "accuracy": 10,
+     "timestamp": "2024-12-30T10:03:00.257Z"
+   }
+   ```
+
+3. Configure the Collection Runner:
+   ```
+   ✨ Important Configuration Steps:
+   1. Open the Collection Runner in Postman
+   2. Select your collection
+   3. Set iteration count: 1000 (or desired number)
+   4. Set delay: 4000 milliseconds (4 seconds)
+   5. Click 'Run' to start automated testing
+   ```
+
+> **💡 Pro Tip:** Using the Collection Runner is recommended for long-term testing as it provides a more reliable and consistent way to simulate real-world location tracking scenarios.
 
 ## License
 
