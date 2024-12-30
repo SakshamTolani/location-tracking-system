@@ -13,6 +13,7 @@ A comprehensive system for real-time GPS location tracking with user authenticat
 - [Testing](#testing)
 - [Architecture](#architecture)
 - [API Documentation](#api-documentation)
+- [Postman Testing](#postman-testing)
 - [License](#license)
 
 ## Overview
@@ -21,30 +22,25 @@ This location tracking system enables users to register, log in, and track their
 
 ## Features
 
-- User authentication and authorization
+- User registration and login
 - Real-time GPS location tracking
-- Interactive map visualization
-- Administrative dashboard
-- Location history logging
-- WebSocket support for live updates
-- Redis caching
-- Comprehensive API
+- Admin interface for user monitoring
+- Detailed location history viewing
+- WebSocket server for real-time updates
+- REST API for user and admin operations
+- Redis for caching and session management
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/location-tracking-system.git
+git clone https://github.com/SakshamTolani/location-tracking-system.git
 cd location-tracking-system
 ```
 
-2. Install server dependencies:
+2. Install dependencies:
 ```bash
 npm install
-```
-
-3. Install client dependencies:
-```bash
 cd client
 npm install
 cd ..
@@ -52,7 +48,7 @@ cd ..
 
 ## Environment Setup
 
-Create a `.env` file in the root directory with the following configurations:
+Create a `.env` file in the root directory and add the following environment variables:
 
 ```env
 # Server
@@ -84,13 +80,13 @@ REDIS_PORT=6379
 
 ## Database Setup
 
-1. Start required services:
+1. Start PostgreSQL and Redis:
 ```bash
 sudo service postgresql start
 sudo service redis-server start
 ```
 
-2. Initialize database:
+2. Create the database and tables:
 ```bash
 npm run db:setup
 ```
@@ -110,45 +106,47 @@ npm start
 
 ## Testing
 
-Execute load tests using Artillery:
+Run the load test using Artillery:
 ```bash
 artillery run location-test.yml
 ```
 
 ## Architecture
 
-### Frontend Components
+The system is divided into two main parts: the frontend and the backend.
 
-- **Login**: User authentication interface
-- **Dashboard**: Main user interface for location tracking
-- **LocationMap**: Interactive map component
-- **AdminDashboard**: User monitoring interface
-- **UserLocationLogs**: Location history viewer
+### Frontend
 
-### Backend Structure
+The frontend is built with React and includes the following components:
 
-- Node.js with Express
-- PostgreSQL database
-- WebSocket server for real-time updates
-- Redis for caching and sessions
-- JWT authentication
+- `Login`: User login form
+- `Dashboard`: User dashboard with location tracking
+- `LocationMap`: Map displaying the user's location and path
+- `AdminDashboard`: Admin interface to monitor users
+- `UserLocationLogs`: Admin interface to view user location logs
+
+### Backend
+
+The backend is built with Node.js, Express, and PostgreSQL. It includes the following features:
+
+- User authentication with JWT
+- WebSocket server for real-time location tracking
+- REST API for user and admin operations
+- Redis for caching and session management
 
 ## API Documentation
 
-### User Endpoints
+### User Routes
 
-#### Authentication
-
-##### Register User
-- **POST** `/api/users/register`
-- **Body**: 
+#### POST /api/users/register
+- Request body: 
 ```json
 {
   "email": "user@example.com",
   "password": "password123"
 }
 ```
-- **Response**: 
+- Response: 
 ```json
 {
   "id": 1,
@@ -156,16 +154,15 @@ artillery run location-test.yml
 }
 ```
 
-##### Login
-- **POST** `/api/users/login`
-- **Body**: 
+#### POST /api/users/login
+- Request body: 
 ```json
 {
   "email": "user@example.com",
   "password": "password123"
 }
 ```
-- **Response**: 
+- Response: 
 ```json
 {
   "token": "jwt_token",
@@ -177,58 +174,71 @@ artillery run location-test.yml
 }
 ```
 
-#### Location Management
-
-##### Get User Profile
-- **GET** `/api/users/profile`
-- **Headers**: `Authorization: Bearer jwt_token`
-- **Response**: User profile with location history
-
-##### Get Location History
-- **GET** `/api/users/locations`
-- **Headers**: `Authorization: Bearer jwt_token`
-- **Response**: Array of location records
-
-##### Store Location
-- **POST** `/api/users/locations`
-- **Headers**: `Authorization: Bearer jwt_token`
-- **Body**:
+#### GET /api/users/profile
+- Headers: `Authorization: Bearer jwt_token`
+- Response: 
 ```json
 {
-  "latitude": 37.7749,
-  "longitude": -122.4194,
-  "accuracy": 10,
-  "timestamp": "2024-12-30T10:03:00.257Z"
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "role": "user"
+  },
+  "locations": [...]
 }
 ```
 
-##### Clean Test Data
-- **POST** `/api/users/cleanup`
-- **Headers**: `Authorization: Bearer jwt_token`
-- **Body**:
+#### GET /api/users/locations
+- Headers: `Authorization: Bearer jwt_token`
+- Response: 
+```json
+[
+  {
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "accuracy": 10,
+    "timestamp": "2024-12-30T10:03:00.257Z"
+  }
+]
+```
+
+### Admin Routes
+
+#### GET /api/admin/users
+- Headers: `Authorization: Bearer jwt_token`
+- Response: 
 ```json
 {
-  "emails": ["user@example.com"],
-  "locationIds": [1, 2, 3]
+  "users": [
+    {
+      "id": 1,
+      "email": "user@example.com",
+      "role": "user",
+      "created_at": "2024-12-30T10:03:00.257Z"
+    }
+  ],
+  "total": 100,
+  "page": 1,
+  "pages": 10
 }
 ```
 
-### Admin Endpoints
+#### GET /api/admin/users/:userId/locations
+- Headers: `Authorization: Bearer jwt_token`
+- Response: 
+```json
+[
+  {
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "timestamp": "2024-12-30T10:03:00.257Z"
+  }
+]
+```
 
-##### List Users
-- **GET** `/api/admin/users`
-- **Headers**: `Authorization: Bearer jwt_token`
-- **Response**: Paginated user list
-
-##### User Location History
-- **GET** `/api/admin/users/:userId/locations`
-- **Headers**: `Authorization: Bearer jwt_token`
-- **Response**: User's complete location history
-
-##### System Metrics
-- **GET** `/api/admin/metrics`
-- **Headers**: `Authorization: Bearer jwt_token`
-- **Response**: 
+#### GET /api/admin/metrics
+- Headers: `Authorization: Bearer jwt_token`
+- Response: 
 ```json
 {
   "activeUsers": 10,
@@ -236,6 +246,44 @@ artillery run location-test.yml
   "timestamp": "2024-12-30T10:03:00.257Z"
 }
 ```
+
+## Postman Testing
+
+To test the location tracking functionality using Postman:
+
+1. Register a new user:
+   - URL: `POST http://localhost:3000/api/users/register`
+   - Body: 
+   ```json
+   {
+     "email": "user@example.com",
+     "password": "password123"
+   }
+   ```
+
+2. Log in the user:
+   - URL: `POST http://localhost:3000/api/users/login`
+   - Body: 
+   ```json
+   {
+     "email": "user@example.com",
+     "password": "password123"
+   }
+   ```
+   - Save the `token` from the response.
+
+3. Track the user's GPS location and send a ping to the server every 4 seconds:
+   - URL: `ws://localhost:3000?token=YOUR_JWT_TOKEN`
+   - Use a WebSocket client (e.g., Postman or a browser extension) to connect.
+   - Send location updates every 4 seconds:
+   ```json
+   {
+     "latitude": 37.7749,
+     "longitude": -122.4194,
+     "accuracy": 10,
+     "timestamp": "2024-12-30T10:03:00.257Z"
+   }
+   ```
 
 ## License
 
