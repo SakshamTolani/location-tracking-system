@@ -1,0 +1,82 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30  # Duration in seconds
+      arrivalRate: 5  # Start with 5 users per second
+      rampTo: 20  # Gradually ramp to 20 users per second
+      name: "Initial test phase"
+  http:
+    timeout: 10
+    pool: 50
+  plugins:
+    expect: {}
+  defaults:
+    headers:
+      Content-Type: "application/json"
+    timeout: 5000
+
+scenarios:
+  - name: "Location tracking test"
+    flow:
+      # Health check
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+
+      # Register a new user
+      - post:
+          url: "/api/users/register"
+          body: |
+            {
+              "email": "user-{{ $randomString(10) }}@test.com",
+              "password": "password123"
+            }
+          expect:
+            - statusCode: [200,201]
+          capture:
+            - json: "$.email"
+              as: "userEmail"
+
+      # Login and get token
+      - think: 1  # Wait 1 second before the next request
+      - post:
+          url: "/api/users/login"
+          body: |
+            {
+              "email": "{{ userEmail }}",
+              "password": "password123"
+            }
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "$.token"
+              as: "authToken"
+
+      # Test location endpoint with token
+      - think: 1  # Wait 1 second before the next request
+      - post:
+          url: "/api/users/locations"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          body: |
+            {
+              "latitude": "{{ $randomNumber(20, 50) }}.{{ $randomNumber(1000, 9999) }}",
+              "longitude": "{{ $randomNumber(70, 100) }}.{{ $randomNumber(1000, 9999) }}",
+              "accuracy": "{{ $randomNumber(1, 20) }}",
+              "timestamp": "2024-12-30T10:03:00.257Z"
+            }
+          expect:
+            - statusCode: [200,201]
+      
+      - post:
+          url: "/api/users/cleanup"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          body: |
+            {
+              "emails": ["{{ userEmail }}"],
+              "locationIds": ["{{ locationId }}"]
+            }
+          expect:
+            - statusCode: 200
